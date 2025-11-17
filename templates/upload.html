@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload CSV & Image</title>
+</head>
+<body>
+
+    <h2>Upload CSV + Image</h2>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+
+        <label>CSV File:</label><br>
+        <input type="file" name="csvFile" required><br><br>
+
+        <label>Image File:</label><br>
+        <input type="file" name="imageFile" required><br><br>
+
+        <button type="submit">Upload</button>
+    </form>
+
+</body>
+</html>
+
