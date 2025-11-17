@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV Files</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .csv-item {
+            padding: 10px;
+            margin: 10px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Uploaded CSV Files</h2>
+
+    {% if csv_files %}
+        {% for csv in csv_files %}
+            <div class="csv-item">
+                📄 <a href="/uploads/{{ csv }}" target="_blank">{{ csv }}</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No CSV files uploaded yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">⬅ Back to Upload Page</a>
+
+</body>
+</html>
+
