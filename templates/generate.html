@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Editor</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #sidebar { float: left; width: 250px; }
+    #canvas-wrap { margin-left: 270px; }
+    #canvas-container { position: relative; border: 1px solid #ddd; display:inline-block; }
+    #main-image { display:block; max-width:800px; max-height:800px; }
+    .var-tag { padding:6px; background:#eef; margin:6px; cursor:grab; border:1px solid #99c;}
+    .placed { position:absolute; pointer-events:auto; background:transparent; font-weight:bold; color:#b22222; }
+    .controls { margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+  <h2>Template Editor</h2>
+
+  <div id="sidebar">
+    <h3>CSV Columns</h3>
+    <div id="columns">
+      {% for col in columns %}
+        <div class="var-tag" draggable="true" data-col="{{ col }}">{{ col }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="controls">
+      <label>Font size:&nbsp;
+        <input id="fontSize" type="number" value="32" min="8" max="200">
+      </label>
+      <br><br>
+      <label>Color:&nbsp;<input id="fontColor" type="color" value="#000000"></label>
+      <br><br>
+      <button id="saveTemplate">Save Template</button>
+      <button id="generate">Generate & Email</button>
+      <br><br>
+<button id="previewGenerated" style="background:#4CAF50;color:white;">Preview Generated Images</button>
+
+      <div id="status" style="margin-top:8px;color:green"></div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <div id="canvas-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <img id="main-image" src="/uploads/{{ image }}" alt="base">
+    </div>
+  </div>
+<button id="previewImages">Preview Images</button>
+<div id="previewContainer"></div>
+<script>
+let draggingCol = null;
+let placed = []; // {col, x, y, font_size, color}
+
+// Drag start
+document.querySelectorAll('.var-tag').forEach(el=>{
+  el.addEventListener('dragstart', (ev)=>{
+    draggingCol = el.dataset.col;
+  });
+});
+
+function allowDrop(ev){
+  ev.preventDefault();
+}
+
+function drop(ev){
+  ev.preventDefault();
+  if(!draggingCol) return;
+  const img = document.getElementById('main-image');
+  const rect = img.getBoundingClientRect();
+
+  const x = ev.clientX - rect.left;
+  const y = ev.clientY - rect.top;
+
+  const nx = x / rect.width;
+  const ny = y / rect.height;
+
+  const fontSize = parseInt(document.getElementById('fontSize').value || "32");
+  const color = document.getElementById('fontColor').value || "#000000";
+
+  const tag = document.createElement('div');
+  tag.className = 'placed';
+  tag.style.left = (nx * 100) + "%";
+  tag.style.top = (ny * 100) + "%";
+  tag.style.fontSize = fontSize + "px";
+  tag.style.color = color;
+
+  // Display as $columnName
+  tag.textContent = "$" + draggingCol;
+  tag.dataset.col = draggingCol;
+  tag.dataset.nx = nx;
+  tag.dataset.ny = ny;
+  tag.dataset.font = fontSize;
+  tag.dataset.color = color;
+
+  makeDraggable(tag);
+  document.getElementById('canvas-container').appendChild(tag);
+
+  placed.push({
+    col: draggingCol,
+    x: nx,
+    y: ny,
+    font_size: fontSize,
+    color: color
+  });
+
+  draggingCol = null;
+}
+
+// Make placed elements draggable
+function makeDraggable(el){
+  el.style.cursor = "move";
+  let isDown=false, startX=0, startY=0, origLeft=0, origTop=0;
+  el.addEventListener('mousedown', (e)=>{
+    isDown=true;
+    startX=e.clientX; startY=e.clientY;
+    const rect = el.getBoundingClientRect();
+    origLeft = rect.left; origTop = rect.top;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e)=>{
+    if(!isDown) return;
+    const img = document.getElementById('main-image');
+    const parentRect = img.getBoundingClientRect();
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    let newLeft = origLeft + dx - parentRect.left;
+    let newTop = origTop + dy - parentRect.top;
+    if(newLeft < 0) newLeft=0;
+    if(newTop < 0) newTop=0;
+    if(newLeft > parentRect.width) newLeft = parentRect.width;
+    if(newTop > parentRect.height) newTop = parentRect.height;
+    el.style.left = (newLeft / parentRect.width * 100) + "%";
+    el.style.top = (newTop / parentRect.height * 100) + "%";
+  });
+  document.addEventListener('mouseup', (e)=>{
+    if(!isDown) return;
+    isDown=false;
+    const img = document.getElementById('main-image');
+    const rect = img.getBoundingClientRect();
+    const left = parseFloat(el.style.left) / 100 * rect.width;
+    const top = parseFloat(el.style.top) / 100 * rect.height;
+    const nx = left / rect.width;
+    const ny = top / rect.height;
+    const col = el.dataset.col;
+    for(let i=placed.length-1;i>=0;i--){
+      if(placed[i].col === col){
+        placed[i].x = nx;
+        placed[i].y = ny;
+        placed[i].font_size = parseInt(el.dataset.font || el.style.fontSize) || placed[i].font_size;
+        placed[i].color = el.dataset.color || placed[i].color;
+        break;
+      }
+    }
+  });
+}
+
+// Save template
+document.getElementById('saveTemplate').addEventListener('click', async ()=>{
+  const domPlaced = Array.from(document.querySelectorAll('.placed'));
+  const placements = domPlaced.map(d=>{
+    const leftPct = parseFloat(d.style.left) / 100;
+    const topPct = parseFloat(d.style.top) / 100;
+    const font_size = parseInt(window.getComputedStyle(d).fontSize) || 32;
+    const color = d.style.color || "#000000";
+    return { col: d.dataset.col, x: leftPct, y: topPct, font_size: font_size, color: color };
+  });
+
+  const payload = {
+    image: "{{ image }}",
+    csv: "{{ csv_file }}",
+    placements: placements,
+    font: { family: "" }
+  };
+
+  const res = await fetch('/save_template', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const j = await res.json();
+  document.getElementById('status').textContent = (j.status === "ok") ? "Template saved." : ("Error: " + JSON.stringify(j));
+});
+
+// Generate & Email
+document.getElementById('generate').addEventListener('click', async ()=>{
+  // Template name must match the saved JSON name
+  const template_name = "{{ image }}_{{ csv_file }}"; // or how you save template JSON
+
+  const form = new FormData();
+  form.append('template_name', template_name);
+  form.append('send_email', 'true'); // optional
+
+  const res = await fetch('/process_batch', { method: 'POST', body: form });
+  const j = await res.json();
+
+  if(j.status === "ok"){
+      document.getElementById('status').textContent = 
+          'Generated images: ' + j.generated.join(', ');
+  } else {
+      document.getElementById('status').textContent = 
+          'Error generating images: ' + j.msg;
+  }
+});
+
+let savedTemplateName = null;
+
+document.getElementById('saveTemplate').addEventListener('click', async ()=>{
+  const img = document.getElementById('main-image');
+  const rect = img.getBoundingClientRect();
+  const domPlaced = Array.from(document.querySelectorAll('.placed'));
+  const placements = domPlaced.map(d=>{
+    const leftPct = parseFloat(d.style.left) / 100;
+    const topPct = parseFloat(d.style.top) / 100;
+    const font_size = parseInt(window.getComputedStyle(d).fontSize) || 32;
+    const color = d.style.color || "#000000";
+    return { col: d.dataset.col, x: leftPct, y: topPct, font_size: font_size, color: color };
+  });
+
+  const payload = {
+    image: "{{ image }}",
+    csv: "{{ csv_file }}",
+    placements: placements,
+    font: { family: "" }
+  };
+
+  const res = await fetch('/save_template_new', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const j = await res.json();
+  document.getElementById('status').textContent = (j.status === "ok") ? "Template saved." : ("Error: " + JSON.stringify(j));
+
+  if(j.status === "ok"){
+    savedTemplateName = j.template_name;
+    document.getElementById('previewGenerated').disabled = false;
+  }
+});
+
+// Preview button
+document.getElementById('previewGenerated').addEventListener('click', ()=>{
+  if(savedTemplateName){
+    window.location.href = `/preview/${savedTemplateName}`;
+  } else {
+    alert("Please save template first to preview generated images.");
+  }
+});
+
+
+
+document.getElementById("previewImages").addEventListener("click", async () => {
+    const form = new FormData();
+    form.append("image", "{{ image }}");
+    form.append("csv", "{{ csv_file }}");
+
+    const res = await fetch("/process_batch", { method: "POST", body: form });
+    const data = await res.json();
+
+    if(data.status === "ok"){
+        const container = document.getElementById("previewContainer");
+        container.innerHTML = "";
+        data.generated.forEach(img => {
+            const el = document.createElement("img");
+            el.src = img;
+            el.style.maxWidth = "300px";
+            el.style.margin = "10px";
+            container.appendChild(el);
+        });
+    } else {
+        alert("Error generating images: " + data.msg);
+    }
+});
+</script>
+
+</body>
+</html>
+

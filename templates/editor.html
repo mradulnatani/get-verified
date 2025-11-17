@@ -28,7 +28,7 @@ body { font-family: Arial, sans-serif; padding: 20px; }
     </div>
 
     <div class="controls">
-        <input type="hidden" id="csv_file" value="{{ csv_file }}"> <!-- FIXED CSV input -->
+        <input type="hidden" id="csv_file" value="{{ csv_file }}">
 
         <label>Font size:&nbsp;
             <input id="fontSize" type="number" value="32" min="8" max="200">
@@ -90,8 +90,8 @@ function drop(ev){
   tag.dataset.col = colName;
   tag.dataset.nx = nx;
   tag.dataset.ny = ny;
-  tag.dataset.font = fontSize;
-  tag.dataset.color = color;
+  tag.dataset.font = fontSize;  // store font size
+  tag.dataset.color = color;    // store color
 
   makeDraggable(tag);
   document.getElementById('canvas-container').appendChild(tag);
@@ -149,16 +149,16 @@ document.getElementById('saveTemplate').addEventListener('click', async ()=>{
   const placements = domPlaced.map(d=>{
     return {
       col: d.dataset.col,
-      x: parseFloat(d.style.left)/100,
-      y: parseFloat(d.style.top)/100,
-      font_size: parseInt(window.getComputedStyle(d).fontSize)||32,
-      color: d.style.color || "#000000"
+      x: parseFloat(d.dataset.nx),          // fixed: use dataset.nx
+      y: parseFloat(d.dataset.ny),          // fixed: use dataset.ny
+      font_size: parseInt(d.dataset.font),  // fixed: use dataset.font
+      color: d.dataset.color                 // fixed: use dataset.color
     };
   });
 
   const payload = {
     image: "{{ image }}",
-    csv: document.getElementById("csv_file").value,  // <-- FIXED
+    csv: document.getElementById("csv_file").value,
     placements: placements
   };
 
