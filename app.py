@@ -195,7 +195,7 @@ def send_emails():
 
 @app.route("/preview/<template_name>")
 def preview(template_name):
-    folder = os.path.join(PREVIEW_DIR, template_name)
+    folder = os.path.join("generated", template_name)  # instead of PREVIEWS_FOLDER
     if not os.path.exists(folder):
         return f"No images generated yet!"
     images = os.listdir(folder)
@@ -341,22 +341,26 @@ def process_batch():
             col = p["col"]
             if col not in row:
                 continue
+
             text = str(row[col])
-            font_size = p.get("font_size", 32)
+            font_size = int(p.get("font_size", 32))
             color = p.get("color", "#000000")
+
+            # Use system font or fallback to default
             try:
-                font = ImageFont.truetype("arial.ttf", font_size)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
             except:
                 font = ImageFont.load_default()
+
             x = int(p["x"] * base.width)
             y = int(p["y"] * base.height)
             draw.text((x, y), text, fill=color, font=font)
 
-        out_file = os.path.join(out_dir, f"{idx}_{image_file}")
-        base.save(out_file)
+        # Save as PNG to avoid RGBA/JPEG issues
+        out_file = os.path.join(out_dir, f"{idx}.png")
+        base.save(out_file, format="PNG")
 
-        if send_email:
-            pass  # Add email logic if needed
+        # Optional: add email logic here if send_email==True
 
     return jsonify({"status": "ok", "template_name": f"{template_name}_{timestamp}", "generated_files": os.listdir(out_dir)})
 
