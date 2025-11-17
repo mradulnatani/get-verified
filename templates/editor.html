@@ -195,9 +195,11 @@ document.getElementById('generate').addEventListener('click', async ()=>{
 
 // Preview
 document.getElementById('preview-btn').addEventListener('click', ()=>{
-  if(!savedTemplateName){ alert("Save template first!"); return; }
-  window.open("/preview/" + encodeURIComponent(savedTemplateName), "_blank");
+    if(!savedTemplateName){ alert("Save template first!"); return; }
+    // Use the exact template_name returned from backend
+    window.open("/preview/" + encodeURIComponent(savedTemplateName), "_blank");
 });
+
 </script>
 
 </body>
