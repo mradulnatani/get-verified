@@ -1,18 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Upload Preview</title>
+  <meta charset="utf-8">
+  <title>Preview Generated Images</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .image-container { display: inline-block; margin: 10px; border: 1px solid #ccc; padding: 5px; }
+    .image-container img { max-width: 200px; max-height: 200px; display:block; }
+  </style>
 </head>
 <body>
-
-    <h2>Uploaded Successfully!</h2>
-
-    <p>Your uploaded image:</p>
-    <img src="/uploads/{{ uploaded_image }}" width="300">
-
+  <h2>Preview for template: {{ template_name }}</h2>
+  {% if images %}
+    {% for img in images %}
+      <div class="image-container">
+        <img src="/previews/{{ template_name }}/{{ img }}" alt="{{ img }}">
+        <div>{{ img }}</div>
+      </div>
+    {% endfor %}
     <br><br>
-    <a href="/gallery">View All Your Uploaded Images</a>
-
+    <form method="POST" action="/send_emails/{{ template_name }}">
+      <button type="submit">Send Emails</button>
+    </form>
+  {% else %}
+    <p>No images generated yet!</p>
+  {% endif %}
 </body>
 </html>
 
