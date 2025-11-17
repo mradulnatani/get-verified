@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Image</title>
+</head>
+<body>
+
+<h2>Select an Image</h2>
+
+{% for img in images %}
+    <div>
+        <img src="/uploads/{{ img }}" width="200">
+        <br>
+        <a href="/select-csv?image={{ img }}">Use this image</a>
+    </div>
+    <hr>
+{% endfor %}
+
+</body>
+</html>
+

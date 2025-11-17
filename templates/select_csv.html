@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select CSV</title>
+</head>
+<body>
+
+<h2>Select CSV for Image: {{ image }}</h2>
+
+{% for csv in csv_files %}
+    <div>
+        📄 {{ csv }}
+        <a href="/editor?image={{ image }}&csv={{ csv }}">Use this CSV</a>
+    </div>
+    <hr>
+{% endfor %}
+
+</body>
+</html>
+
