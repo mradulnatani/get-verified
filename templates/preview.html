@@ -1,23 +1,15 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>Preview Generated Images</title>
-<style>
-img { max-width: 400px; margin: 10px; border:1px solid #ccc; }
-</style>
-</head>
+<head><title>Preview</title></head>
 <body>
-<h2>Preview: {{ template_name }}</h2>
-
+<h2>Preview of Generated Images</h2>
 {% if images %}
     {% for image in images %}
-        <img src="/generated/{{ template_name | urlencode }}/{{ image | urlencode }}" alt="{{ image }}">
+        <img src="/generated/{{ template_name }}/{{ image }}" style="max-width:400px;margin:5px;">
     {% endfor %}
 {% else %}
     <p>No images generated yet!</p>
 {% endif %}
-
 </body>
 </html>
 
