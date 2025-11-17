@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Image</title>
+</head>
+<body>
+    <h1>Edit Image</h1>
+
+    <h3>Selected Image:</h3>
+    <img src="/uploads/{{ image_name }}" width="350" style="border:1px solid #ccc;">
+
+    <h3>Select CSV File:</h3>
+    <form action="/make_variables" method="POST">
+        <input type="hidden" name="image_name" value="{{ image_name }}">
+
+        <label for="csv_file">Choose CSV:</label>
+        <select name="csv_file" required>
+            <option value="" selected disabled>-- Select CSV --</option>
+            {% for csv in csv_files %}
+                <option value="{{ csv }}">{{ csv }}</option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+        <button type="submit">Load Variables</button>
+    </form>
+</body>
+</html>
+
