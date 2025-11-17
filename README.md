@@ -157,7 +157,7 @@ You will be able to automatically send each generated image to the corresponding
 Install all dependencies with:
 
 ```bash
-pip install Flask pandas pillow
+pip install -r requirements.txt
 ```
 
 ---
