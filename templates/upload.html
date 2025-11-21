@@ -1,22 +1,301 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Upload CSV & Image</title>
+    <meta charset="UTF-8">
+    <title>Get Verified - Certificate Automation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 40px;
+            background: #4a6cf7;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 25px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Hero / Info Section */
+        .hero {
+            max-width: 900px;
+            margin: 50px auto 30px auto;
+            background: white;
+            padding: 40px 50px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .hero h2 {
+            text-align: center;
+            font-weight: 700;
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #4a6cf7;
+        }
+
+        .hero p {
+            text-align: center;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Features section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .feature-box {
+            background: #f0f5ff;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+
+        .feature-box h3 {
+            font-size: 18px;
+            color: #4a6cf7;
+            margin-bottom: 10px;
+        }
+
+        .feature-box p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Upload Container */
+        .container {
+            max-width: 700px;
+            margin: 50px auto 80px auto;
+            background: white;
+            padding: 50px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed #aac4ff;
+            border-radius: 10px;
+            background: #f0f5ff;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: 0.2s;
+        }
+
+        .file-input:hover {
+            background: #e6ebff;
+            border-color: #4a6cf7;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        button.primary-btn {
+            background: #4a6cf7;
+            color: white;
+            padding: 14px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+
+        button.primary-btn:hover {
+            background: #3654db;
+        }
+
+        .divider {
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .divider:before, .divider:after {
+            content: "";
+            position: absolute;
+            width: 40%;
+            height: 1px;
+            background: #ddd;
+            top: 50%;
+        }
+
+        .divider:before {
+            left: 0;
+        }
+
+        .divider:after {
+            right: 0;
+        }
+
+        .secondary-btn {
+            background: white;
+            color: #4a6cf7;
+            font-weight: 600;
+            border: 2px solid #4a6cf7;
+            padding: 12px 0;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .secondary-btn:hover {
+            background: #f2f4ff;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            color: #999;
+            font-size: 13px;
+            padding-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .navbar a {
+                margin: 8px 0 0 0;
+            }
+
+            .container, .hero {
+                margin: 30px 20px;
+                padding: 30px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-    <h2>Upload CSV + Image</h2>
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1 onclick="window.location.href='/'">Get Verified</h1>
+        <div>
+            <a href="/gallery">Gallery</a>
+            <a href="/csvs">CSV Files</a>
+            <a href="/select-image">Templates</a>
+        </div>
+    </div>
 
-    <form action="/upload" method="POST" enctype="multipart/form-data">
+    <!-- Hero / Info Section -->
+    <div class="hero">
+        <h2>Welcome to Get Verified</h2>
+        <p>
+            Get Verified is an automated certificate generation and delivery platform.
+            Easily create personalized certificates from a CSV file and a base certificate template.
+            Once uploaded, you can generate multiple certificates in bulk and send them via email directly.
+        </p>
 
-        <label>CSV File:</label><br>
-        <input type="file" name="csvFile" required><br><br>
+        <div class="features">
+            <div class="feature-box">
+                <h3>Bulk Certificate Generation</h3>
+                <p>Upload your CSV and base template to generate hundreds of certificates in seconds.</p>
+            </div>
+            <div class="feature-box">
+                <h3>Email Automation</h3>
+                <p>Automatically send certificates to recipients via email after generation.</p>
+            </div>
+            <div class="feature-box">
+                <h3>Template Management</h3>
+                <p>Save, edit, and reuse certificate templates for consistent design and branding.</p>
+            </div>
+            <div class="feature-box">
+                <h3>Preview & Tracking</h3>
+                <p>Preview generated certificates and track email delivery status from your dashboard.</p>
+            </div>
+        </div>
+    </div>
 
-        <label>Image File:</label><br>
-        <input type="file" name="imageFile" required><br><br>
+    <!-- Upload Container -->
+    <div class="container">
+        <h2>Upload Certificate Source Files</h2>
+        <p class="description">Start generating certificates by uploading your CSV file and a base certificate template.</p>
 
-        <button type="submit">Upload</button>
-    </form>
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <label>CSV File</label>
+            <div class="file-input">
+                <input type="file" name="csvFile" accept=".csv" required>
+            </div>
+
+            <label style="margin-top: 20px;">Base Image / Certificate Template</label>
+            <div class="file-input">
+                <input type="file" name="imageFile" accept="image/*" required>
+            </div>
+
+            <button type="submit" class="primary-btn">Upload & Continue</button>
+        </form>
+
+        <div class="divider">or</div>
+
+        <button class="secondary-btn" onclick="window.location.href='/select-image'">
+            Work on Existing Templates
+        </button>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Get Verified. All rights reserved.
+    </div>
 
 </body>
 </html>

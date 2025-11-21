@@ -2,211 +2,389 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Template Editor</title>
+<title>Certificate Template Editor</title>
+
 <style>
-body { font-family: Arial, sans-serif; padding: 20px; }
-#sidebar { float: left; width: 250px; }
-#canvas-wrap { margin-left: 270px; }
-#canvas-container { position: relative; border: 1px solid #ddd; display:inline-block; }
-#main-image { display:block; max-width:800px; max-height:800px; }
-.var-tag { padding:6px; background:#eef; margin:6px; cursor:grab; border:1px solid #99c;}
-.placed { position:absolute; pointer-events:auto; background:transparent; font-weight:bold; color:#b22222; }
-.controls { margin-top: 16px; }
-#preview-btn { margin-top: 10px; }
+    body {
+        font-family: "Inter", Arial, sans-serif;
+        margin: 0;
+        background: #f4f6fb;
+    }
+
+    h2 {
+        margin: 20px 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #333;
+        text-align: center;
+    }
+
+    /* Layout */
+    #layout {
+        display: flex;
+        height: calc(100vh - 80px);
+    }
+
+    /* Sidebar */
+    #sidebar {
+        width: 300px;
+        background: #ffffff;
+        padding: 25px;
+        box-shadow: 4px 0 25px rgba(0,0,0,0.07);
+        overflow-y: auto;
+        border-right: 1px solid #eee;
+    }
+
+    #sidebar h3 {
+        font-size: 18px;
+        margin-bottom: 14px;
+        color: #222;
+        font-weight: 600;
+    }
+
+    /* CSV column tags */
+    .var-tag {
+        padding: 10px 14px;
+        background: #f1f4ff;
+        border: 1px solid #c8d4ff;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        cursor: grab;
+        font-size: 14px;
+        transition: 0.2s ease;
+    }
+    .var-tag:hover { background: #e4e9ff; }
+
+    /* Controls */
+    .controls {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+    }
+
+    .controls label {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .controls input[type="number"],
+    .controls input[type="color"] {
+        margin-left: 10px;
+        padding: 6px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        font-size: 14px;
+    }
+
+    /* Buttons */
+    button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 12px;
+        border: none;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    #saveTemplate { background: #4a6cf7; }
+    #saveTemplate:hover { background: #3d5ee0; }
+
+    #generate { background: #0c7b4f; }
+    #generate:hover { background: #0a6a45; }
+
+    #preview-btn { background: #222; }
+    #preview-btn:hover { background: #000; }
+
+    #status {
+        margin-top: 10px;
+        color: #0a7d26;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    /* Canvas area */
+    #canvas-wrap {
+        flex-grow: 1;
+        padding: 25px;
+        overflow-y: auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    #canvas-container {
+        position: relative;
+        background: white;
+        border-radius: 10px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    #main-image {
+        display: block;
+        max-width: 900px;
+        max-height: 900px;
+        border-radius: 8px;
+    }
+
+    /* Placed CSV tags */
+    .placed {
+        position: absolute;
+        cursor: move;
+        pointer-events: auto;
+        font-weight: bold;
+        background: transparent;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
 </style>
 </head>
+
 <body>
 
-<h2>Template Editor</h2>
+<h2>Certificate Template Editor</h2>
 
-<div id="sidebar">
-    <h3>CSV Columns</h3>
-    <div id="columns">
-      {% for col in columns %}
-        <div class="var-tag" draggable="true" data-col="{{ col }}">{{ col }}</div>
-      {% endfor %}
+<div id="layout">
+
+    <!-- LEFT SIDEBAR -->
+    <div id="sidebar">
+
+        <h3>CSV Fields</h3>
+        <div id="columns">
+            {% for col in columns %}
+                <div class="var-tag" draggable="true" data-col="{{ col }}">{{ col }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="controls">
+            <input type="hidden" id="csv_file" value="{{ csv_file }}">
+
+            <label>Font size:
+                <input id="fontSize" type="number" value="32" min="8" max="200">
+            </label>
+
+            <br><br>
+
+            <label>Color:
+                <input id="fontColor" type="color" value="#000000">
+            </label>
+
+            <button id="saveTemplate">Save Template</button>
+            <button id="generate">Generate Images</button>
+            <button id="preview-btn">Preview Output</button>
+
+            <div id="status"></div>
+        </div>
     </div>
 
-    <div class="controls">
-        <input type="hidden" id="csv_file" value="{{ csv_file }}">
-
-        <label>Font size:&nbsp;
-            <input id="fontSize" type="number" value="32" min="8" max="200">
-        </label>
-        <br><br>
-        <label>Color:&nbsp;<input id="fontColor" type="color" value="#000000"></label>
-        <br><br>
-        <button id="saveTemplate">Save Template</button>
-        <button id="generate">Generate & Email</button>
-        <button id="preview-btn">Preview Generated Images</button>
-        <div id="status" style="margin-top:8px;color:green"></div>
+    <!-- RIGHT: Canvas -->
+    <div id="canvas-wrap">
+        <div id="canvas-container"
+             ondrop="drop(event)"
+             ondragover="allowDrop(event)">
+            <img id="main-image" src="/uploads/{{ image }}">
+        </div>
     </div>
-</div>
 
-<div id="canvas-wrap">
-    <div id="canvas-container" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <img id="main-image" src="/uploads/{{ image }}" alt="base">
-    </div>
 </div>
 
 <script>
 let draggingCol = null;
 let placed = [];
 let savedTemplateName = null;
+let selectedEl = null;
 
-// Drag start
-document.querySelectorAll('.var-tag').forEach(el=>{
-  el.addEventListener('dragstart', (ev)=>{
-    draggingCol = el.dataset.col;
-    ev.dataTransfer.setData("text/plain", draggingCol);
-  });
+/* ------------------------- Element Selection ------------------------- */
+function selectElement(el) {
+    if (selectedEl) selectedEl.style.outline = "none";
+    selectedEl = el;
+    el.style.outline = "2px dashed #007bff";
+
+    document.getElementById("fontSize").value = parseInt(el.dataset.font);
+    document.getElementById("fontColor").value = el.dataset.color;
+}
+
+/* ------------------------- Style Editing ------------------------- */
+document.getElementById("fontSize").addEventListener("input", () => {
+    if (selectedEl) {
+        selectedEl.style.fontSize = event.target.value + "px";
+        selectedEl.dataset.font = event.target.value;
+    }
 });
 
-// Allow drop
-function allowDrop(ev){ ev.preventDefault(); }
-
-function drop(ev){
-  ev.preventDefault();
-  const colName = ev.dataTransfer.getData("text/plain");
-  if(!colName) return;
-
-  const img = document.getElementById('main-image');
-  const rect = img.getBoundingClientRect();
-  const x = ev.clientX - rect.left;
-  const y = ev.clientY - rect.top;
-  const nx = x / rect.width;
-  const ny = y / rect.height;
-
-  const fontSize = parseInt(document.getElementById('fontSize').value || "32");
-  const color = document.getElementById('fontColor').value || "#000000";
-
-  const tag = document.createElement('div');
-  tag.className = 'placed';
-  tag.style.left = (nx*100) + "%";
-  tag.style.top = (ny*100) + "%";
-  tag.style.fontSize = fontSize + "px";
-  tag.style.color = color;
-  tag.textContent = colName;
-  tag.dataset.col = colName;
-  tag.dataset.nx = nx;
-  tag.dataset.ny = ny;
-  tag.dataset.font = fontSize;  // store font size
-  tag.dataset.color = color;    // store color
-
-  makeDraggable(tag);
-  document.getElementById('canvas-container').appendChild(tag);
-
-  placed.push({ col: colName, x: nx, y: ny, font_size: fontSize, color: color });
-}
-
-// Draggable placed elements
-function makeDraggable(el){
-  let isDown=false, startX=0, startY=0, origLeft=0, origTop=0;
-  el.addEventListener('mousedown', (e)=>{
-    isDown=true; startX=e.clientX; startY=e.clientY;
-    const rect = el.getBoundingClientRect();
-    origLeft = rect.left; origTop = rect.top;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', (e)=>{
-    if(!isDown) return;
-    const img = document.getElementById('main-image');
-    const rect = img.getBoundingClientRect();
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    let newLeft = origLeft + dx - rect.left;
-    let newTop = origTop + dy - rect.top;
-    newLeft = Math.max(0, Math.min(newLeft, rect.width));
-    newTop = Math.max(0, Math.min(newTop, rect.height));
-    el.style.left = (newLeft / rect.width * 100) + "%";
-    el.style.top = (newTop / rect.height * 100) + "%";
-  });
-  document.addEventListener('mouseup', ()=>{
-    if(!isDown) return;
-    isDown=false;
-    const img = document.getElementById('main-image');
-    const rect = img.getBoundingClientRect();
-    const left = parseFloat(el.style.left)/100 * rect.width;
-    const top = parseFloat(el.style.top)/100 * rect.height;
-    const nx = left / rect.width;
-    const ny = top / rect.height;
-    const col = el.dataset.col;
-    for(let i=placed.length-1;i>=0;i--){
-      if(placed[i].col === col){
-        placed[i].x = nx;
-        placed[i].y = ny;
-        placed[i].font_size = parseInt(el.dataset.font || el.style.fontSize) || placed[i].font_size;
-        placed[i].color = el.dataset.color || placed[i].color;
-        break;
-      }
+document.getElementById("fontColor").addEventListener("input", () => {
+    if (selectedEl) {
+        selectedEl.style.color = event.target.value;
+        selectedEl.dataset.color = event.target.value;
     }
-  });
+});
+
+/* ------------------------- Delete Key ------------------------- */
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Delete" && selectedEl) {
+        const col = selectedEl.dataset.col;
+        placed = placed.filter(p => p.col !== col);
+        selectedEl.remove();
+        selectedEl = null;
+    }
+});
+
+/* ------------------------- Drag CSV Tag ------------------------- */
+document.querySelectorAll('.var-tag').forEach(el => {
+    el.addEventListener('dragstart', (ev) => {
+        draggingCol = el.dataset.col;
+        ev.dataTransfer.setData("text/plain", draggingCol);
+    });
+});
+
+function allowDrop(ev) { ev.preventDefault(); }
+
+/* ------------------------- Drop on Canvas ------------------------- */
+function drop(ev) {
+    ev.preventDefault();
+    const colName = ev.dataTransfer.getData("text/plain");
+    if (!colName) return;
+
+    const img = document.getElementById('main-image');
+    const rect = img.getBoundingClientRect();
+
+    const nx = (ev.clientX - rect.left) / rect.width;
+    const ny = (ev.clientY - rect.top) / rect.height;
+
+    const fontSize = parseInt(document.getElementById("fontSize").value);
+    const color = document.getElementById("fontColor").value;
+
+    const tag = document.createElement('div');
+    tag.className = 'placed';
+    tag.style.left = (nx * 100) + "%";
+    tag.style.top = (ny * 100) + "%";
+    tag.style.fontSize = fontSize + "px";
+    tag.style.color = color;
+    tag.textContent = colName;
+
+    tag.dataset.col = colName;
+    tag.dataset.nx = nx;
+    tag.dataset.ny = ny;
+    tag.dataset.font = fontSize;
+    tag.dataset.color = color;
+
+    tag.addEventListener("click", () => selectElement(tag));
+
+    makeDraggable(tag);
+    document.getElementById("canvas-container").appendChild(tag);
+
+    placed.push({ col: colName, x: nx, y: ny, font_size: fontSize, color: color });
 }
 
-// Save template
-document.getElementById('saveTemplate').addEventListener('click', async ()=>{
-  const domPlaced = Array.from(document.querySelectorAll('.placed'));
-  const placements = domPlaced.map(d=>{
-    return {
-      col: d.dataset.col,
-      x: parseFloat(d.dataset.nx),          // fixed: use dataset.nx
-      y: parseFloat(d.dataset.ny),          // fixed: use dataset.ny
-      font_size: parseInt(d.dataset.font),  // fixed: use dataset.font
-      color: d.dataset.color                 // fixed: use dataset.color
+/* ------------------------- Make Elements Draggable ------------------------- */
+function makeDraggable(el) {
+    let isDown = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+    el.addEventListener('mousedown', (e) => {
+        selectElement(el);
+        isDown = true;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        const rect = el.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+
+        const img = document.getElementById('main-image');
+        const rect = img.getBoundingClientRect();
+
+        let newLeft = (origLeft + (e.clientX - startX) - rect.left);
+        let newTop = (origTop + (e.clientY - startY) - rect.top);
+
+        newLeft = Math.max(0, Math.min(newLeft, rect.width));
+        newTop = Math.max(0, Math.min(newTop, rect.height));
+
+        el.style.left = (newLeft / rect.width * 100) + "%";
+        el.style.top = (newTop / rect.height * 100) + "%";
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isDown) return;
+        isDown = false;
+
+        const img = document.getElementById('main-image');
+        const rect = img.getBoundingClientRect();
+
+        const nx = parseFloat(el.style.left) / 100;
+        const ny = parseFloat(el.style.top) / 100;
+
+        el.dataset.nx = nx;
+        el.dataset.ny = ny;
+
+        placed.forEach(p => {
+            if (p.col === el.dataset.col) {
+                p.x = nx;
+                p.y = ny;
+                p.font_size = el.dataset.font;
+                p.color = el.dataset.color;
+            }
+        });
+    });
+}
+
+/* ------------------------- Save Template ------------------------- */
+document.getElementById("saveTemplate").addEventListener("click", async () => {
+    const domPlaced = Array.from(document.querySelectorAll('.placed'));
+
+    const placements = domPlaced.map(d => ({
+        col: d.dataset.col,
+        x: parseFloat(d.dataset.nx),
+        y: parseFloat(d.dataset.ny),
+        font_size: parseInt(d.dataset.font),
+        color: d.dataset.color
+    }));
+
+    const payload = {
+        image: "{{ image }}",
+        csv: document.getElementById("csv_file").value,
+        placements: placements
     };
-  });
 
-  const payload = {
-    image: "{{ image }}",
-    csv: document.getElementById("csv_file").value,
-    placements: placements
-  };
+    const res = await fetch('/save_template_new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
 
-  const res = await fetch('/save_template_new', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
+    const data = await res.json();
+    savedTemplateName = data.template_name || null;
 
-  const data = await res.json();
-  if(data.template_name){
-    savedTemplateName = data.template_name;
-    document.getElementById('status').textContent = "Template saved: " + savedTemplateName;
-  } else {
-    document.getElementById('status').textContent = "Error saving template.";
-  }
+    document.getElementById('status').textContent =
+        savedTemplateName ? "Template saved: " + savedTemplateName : "Error saving template.";
 });
 
-// Generate & Email
-document.getElementById('generate').addEventListener('click', async ()=>{
-  if(!savedTemplateName){ alert("Save template first!"); return; }
-  const form = new FormData();
-  form.append('template_name', savedTemplateName);
-  form.append('send_email', 'true');
+/* ------------------------- Generate Images (NO EMAILS) ------------------------- */
+document.getElementById("generate").addEventListener("click", async () => {
+    if (!savedTemplateName) { alert("Save template first!"); return; }
 
-  const res = await fetch('/process_batch', { method:'POST', body:form });
-  const j = await res.json();
-  if(j.status==="ok"){
-    document.getElementById('status').textContent = 'Generated images for all rows.';
-  } else {
-    document.getElementById('status').textContent = 'Error generating images: '+(j.message||'Unknown');
-  }
+    const form = new FormData();
+    form.append("template_name", savedTemplateName);
+    form.append("send_email", "false");
+
+    const res = await fetch("/process_batch", { method: "POST", body: form });
+    const json = await res.json();
+
+    document.getElementById("status").textContent =
+        json.status === "ok" ? "Images generated successfully!" : "Error generating images.";
 });
 
-// Preview
-// Preview
-document.getElementById('preview-btn').addEventListener('click', ()=>{
-    if(!savedTemplateName){ 
-        alert("Save template first!"); 
-        return; 
-    }
-
-    // Always open latest sorted previews
+/* ------------------------- Preview Page ------------------------- */
+document.getElementById("preview-btn").addEventListener("click", () => {
+    if (!savedTemplateName) { alert("Save template first!"); return; }
     window.open("/preview_latest");
 });
-
-
-
 </script>
 
 </body>

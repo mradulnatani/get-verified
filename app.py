@@ -9,7 +9,9 @@ import csv
 from flask import current_app
 from flask import send_from_directory
 from flask import Flask, render_template, request, send_from_directory, redirect, url_for,jsonify
-
+import shutil
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -170,8 +172,8 @@ def send_emails():
 
     generated_folder = "generated"
 
-    EMAIL_USER = "mradulnatani0@gmail.com"
-    EMAIL_PASS = "mp134055"
+    EMAIL_USER = ""
+    EMAIL_PASS = ""
 
     for i, row in df.iterrows():
         email = row.get("email") or row.get("Email") or row.get("mail")
@@ -282,11 +284,120 @@ def generate_images():
     return jsonify({"status": "ok", "generated": os.listdir(template_folder)})
 
 
+
+
+def send_batch_emails(csv_path, generated_folder):
+    """
+    Reads emails from CSV and sends generated images.
+    One image per row, named: 0.png, 1.png, 2.png ... 
+    """
+
+    # Load credentials from .env
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    EMAIL_HOST = os.getenv("EMAIL_HOST")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
+    EMAIL_USER = os.getenv("EMAIL_USER")
+    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+
+    results = []
+
+    # Read CSV
+    with open(csv_path, newline="", encoding="utf-8-sig") as f:
+        reader = list(csv.DictReader(f))
+
+    for idx, row in enumerate(reader):
+        # detect email column automatically
+        email = (
+            row.get("email")
+            or row.get("Email")
+            or row.get("mail")
+            or row.get("Mail")
+        )
+
+        if not email:
+            results.append((idx, False, "No email column"))
+            continue
+
+        # Image: generated_folder/idx.png
+        image_path = os.path.join(generated_folder, f"{idx}.png")
+        if not os.path.exists(image_path):
+            results.append((idx, False, "Image not found"))
+            continue
+
+        # Create email
+        msg = EmailMessage()
+        msg["Subject"] = "Your Certificate"
+        msg["From"] = EMAIL_USER
+        msg["To"] = email
+        msg.set_content("Please find your certificate attached.")
+
+        with open(image_path, "rb") as f:
+            msg.add_attachment(
+                f.read(),
+                maintype="image",
+                subtype="png",
+                filename=f"{idx}.png"
+            )
+
+        # Send
+        try:
+            if EMAIL_USE_TLS:
+                smtp = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+                smtp.starttls()
+            else:
+                smtp = smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT)
+
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+            smtp.quit()
+
+            results.append((idx, True, "Sent"))
+
+        except Exception as e:
+            results.append((idx, False, str(e)))
+
+    return results
+
+def get_latest_generated_folder():
+    folders = [
+        os.path.join(GENERATED_FOLDER, d)
+        for d in os.listdir(GENERATED_FOLDER)
+        if os.path.isdir(os.path.join(GENERATED_FOLDER, d))
+    ]
+
+    if not folders:
+        return None
+
+    return max(folders, key=os.path.getmtime)
+
+
 @app.route("/process_batch", methods=["POST"])
 def process_batch():
-    template_name = request.form.get("template_name")
+    # -------------------- Case 1: Send emails from preview --------------------
     send_email = request.form.get("send_email") == "true"
+    template_name = request.form.get("template_name")
 
+    if send_email and (not template_name or template_name == ""):
+        folder = get_latest_generated_folder()
+        if not folder:
+            return jsonify({"status": "error", "message": "No generated batch found"}), 400
+
+        csv_path = os.path.join(folder, "data.csv")
+        if not os.path.exists(csv_path):
+            # fallback: check for any CSV in folder
+            csv_files = [f for f in os.listdir(folder) if f.lower().endswith(".csv")]
+            if csv_files:
+                csv_path = os.path.join(folder, csv_files[0])
+            else:
+                return jsonify({"status": "error", "message": "CSV missing in batch folder"}), 400
+
+        result = send_batch_emails(csv_path, folder)
+        return jsonify({"status": "ok", "email_results": result})
+
+    # -------------------- Case 2: Generate images from editor --------------------
     if not template_name:
         return jsonify({"status": "error", "message": "No template_name provided"}), 400
 
@@ -294,6 +405,7 @@ def process_batch():
     if not os.path.exists(template_path):
         return jsonify({"status": "error", "message": "Template JSON not found"}), 400
 
+    # Load template JSON
     with open(template_path) as f:
         template = json.load(f)
 
@@ -301,28 +413,25 @@ def process_batch():
     csv_file = template.get("csv")
     placements = template.get("placements")
 
-    if not csv_file:
-        return jsonify({"status": "error", "message": "CSV not specified in template"}), 400
-
+    # CSV validation
     csv_path = os.path.join(UPLOAD_FOLDER, csv_file)
     if not os.path.exists(csv_path):
-        return jsonify({"status": "error", "message": f"CSV file not found: {csv_file}"}), 400
+        return jsonify({"status": "error", "message": f"CSV not found: {csv_file}"}), 400
 
-    import csv
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
-        reader = list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
 
-    if not reader:
-        return jsonify({"status": "error", "message": "CSV has no data"}), 400
+    if not rows:
+        return jsonify({"status": "error", "message": "CSV is empty"}), 400
 
-    # Prepare output directory
+    # Output directory
     timestamp = int(time.time())
     out_dir = os.path.join(GENERATED_FOLDER, f"{template_name}_{timestamp}")
     os.makedirs(out_dir, exist_ok=True)
+    shutil.copy(csv_path, os.path.join(out_dir, "data.csv"))
 
-    from PIL import Image, ImageDraw, ImageFont
-
-    for idx, row in enumerate(reader):
+    # -------------------- Image generation (UNCHANGED) --------------------
+    for idx, row in enumerate(rows):
         img_path = os.path.join(UPLOAD_FOLDER, image_file)
         base = Image.open(img_path).convert("RGBA")
         draw = ImageDraw.Draw(base)
@@ -336,9 +445,11 @@ def process_batch():
             font_size = int(p.get("font_size", 32))
             color = p.get("color", "#000000")
 
-            # Use system font or fallback to default
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+                font = ImageFont.truetype(
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                    font_size
+                )
             except:
                 font = ImageFont.load_default()
 
@@ -346,14 +457,19 @@ def process_batch():
             y = int(p["y"] * base.height)
             draw.text((x, y), text, fill=color, font=font)
 
-        # Save as PNG to avoid RGBA/JPEG issues
-        out_file = os.path.join(out_dir, f"{idx}.png")
-        base.save(out_file, format="PNG")
+        base.save(os.path.join(out_dir, f"{idx}.png"), format="PNG")
 
-        # Optional: add email logic here if send_email==True
+    # -------------------- Optional: Send emails after generation ----------------
+    email_results = None
+    if send_email:
+        email_results = send_batch_emails(csv_path, out_dir)
 
-    return jsonify({"status": "ok", "template_name": f"{template_name}_{timestamp}", "generated_files": os.listdir(out_dir)})
-
+    return jsonify({
+        "status": "ok",
+        "template_used": template_name,
+        "generated_folder": out_dir,
+        "email_results": email_results
+    })
 
 
 @app.route("/save_template_new", methods=["POST"])
@@ -375,29 +491,27 @@ def preview_auto():
 def serve_generated(filename):
     return send_from_directory("generated", filename)
 
-
-
 @app.route("/preview_latest")
 def preview_latest():
     base_path = "generated"
 
-    # Find all directories inside generated/
+    if not os.path.exists(base_path):
+        return render_template("preview.html", images=[], template_name="")
+
     folders = [
         f for f in os.listdir(base_path)
         if os.path.isdir(os.path.join(base_path, f))
     ]
 
     if not folders:
-        return render_template("preview.html", images=[])
+        return render_template("preview.html", images=[], template_name="")
 
-    # Pick the most recently modified folder
     latest = sorted(
         folders,
         key=lambda x: os.path.getmtime(os.path.join(base_path, x)),
         reverse=True
     )[0]
 
-    # Build file list
     folder_path = os.path.join(base_path, latest)
     images = [
         f"/generated/{latest}/{img}"
@@ -405,9 +519,21 @@ def preview_latest():
         if img.lower().endswith((".png", ".jpg", ".jpeg"))
     ]
 
-    return render_template("preview.html", images=images)
+    return render_template("preview.html", images=images, template_name=latest)
 
 
+
+def get_latest_generated_folder():
+    base_path = GENERATED_FOLDER
+    folders = [f for f in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, f))]
+    if not folders:
+        return None
+    latest = sorted(
+        folders,
+        key=lambda x: os.path.getmtime(os.path.join(base_path, x)),
+        reverse=True
+    )[0]
+    return os.path.join(base_path, latest)
 
 if __name__ == "__main__":
     app.run(debug=True)
