@@ -1,4 +1,3 @@
-from flask import Flask, render_template, request, send_from_directory, jsonify
 import os,json
 from flask import send_from_directory
 import pandas as pd
@@ -7,8 +6,14 @@ from email.message import EmailMessage
 from PIL import Image, ImageDraw, ImageFont
 import time
 import csv
+from flask import current_app
+from flask import send_from_directory
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for,jsonify
+
 
 app = Flask(__name__)
+
+
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -22,7 +27,7 @@ TEMPLATE_JSON_FOLDER = "templates_json"
 os.makedirs(TEMPLATE_JSON_FOLDER, exist_ok=True)
 UPLOAD_FOLDER = "uploads"
 
-
+app.config["GENERATED_FOLDER"] = GENERATED_FOLDER
 
 UPLOAD_DIR = "uploads"
 TEMPLATE_DIR = "templates_json"
@@ -165,8 +170,8 @@ def send_emails():
 
     generated_folder = "generated"
 
-    EMAIL_USER = "your@gmail.com"
-    EMAIL_PASS = "your-app-password"
+    EMAIL_USER = "mradulnatani0@gmail.com"
+    EMAIL_PASS = "mp134055"
 
     for i, row in df.iterrows():
         email = row.get("email") or row.get("Email") or row.get("mail")
@@ -190,21 +195,6 @@ def send_emails():
             smtp.send_message(msg)
 
     return "Emails sent!"
-
-
-
-@app.route("/preview/<template_name>")
-def preview(template_name):
-    folder = os.path.join("generated", template_name)  # instead of PREVIEWS_FOLDER
-    if not os.path.exists(folder):
-        return f"No images generated yet!"
-    images = os.listdir(folder)
-    return render_template("preview.html", images=images, template_name=template_name)
-
-
-@app.route("/previews/<template_name>/<filename>")
-def serve_preview_image(template_name, filename):
-    return send_from_directory(os.path.join(PREVIEW_DIR, template_name), filename)
 
 
 
@@ -376,6 +366,46 @@ def save_template_new():
     return jsonify({"status": "ok", "template_name": template_name})
 
 
+@app.route("/preview")
+def preview_auto():
+    return redirect(url_for("preview_latest"))
+
+
+@app.route("/generated/<path:filename>")
+def serve_generated(filename):
+    return send_from_directory("generated", filename)
+
+
+
+@app.route("/preview_latest")
+def preview_latest():
+    base_path = "generated"
+
+    # Find all directories inside generated/
+    folders = [
+        f for f in os.listdir(base_path)
+        if os.path.isdir(os.path.join(base_path, f))
+    ]
+
+    if not folders:
+        return render_template("preview.html", images=[])
+
+    # Pick the most recently modified folder
+    latest = sorted(
+        folders,
+        key=lambda x: os.path.getmtime(os.path.join(base_path, x)),
+        reverse=True
+    )[0]
+
+    # Build file list
+    folder_path = os.path.join(base_path, latest)
+    images = [
+        f"/generated/{latest}/{img}"
+        for img in os.listdir(folder_path)
+        if img.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    return render_template("preview.html", images=images)
 
 
 
