@@ -1,37 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>CSV Files</title>
+    <meta charset="UTF-8">
+    <title>CSV Files - Get Verified</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .csv-item {
-            padding: 10px;
-            margin: 10px 0;
-            border-bottom: 1px solid #ccc;
+        body {
+            margin: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
         }
-        a {
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 40px;
+            background: #4a6cf7;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .navbar a {
+            color: white;
             text-decoration: none;
-            color: #007bff;
-            font-weight: bold;
+            margin-left: 25px;
+            font-weight: 600;
+            transition: 0.2s;
         }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin: 40px auto 20px auto;
+        }
+
+        .page-header h2 {
+            font-size: 28px;
+            color: #4a6cf7;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* CSV List */
+        .csv-list {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        .csv-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            transition: 0.2s;
+        }
+
+        .csv-item:last-child {
+            border-bottom: none;
+        }
+
+        .csv-item:hover {
+            background: #f2f4ff;
+            transform: translateY(-2px);
+        }
+
+        .csv-item a {
+            text-decoration: none;
+            color: #4a6cf7;
+            font-weight: 600;
+        }
+
+        /* No CSV message */
+        .no-csv {
+            text-align: center;
+            color: #777;
+            font-size: 16px;
+            margin: 50px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin: 60px 0 30px 0;
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* Back button */
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 18px;
+            background: #4a6cf7;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #3b5de0;
+        }
+
     </style>
 </head>
 <body>
 
-    <h2>Uploaded CSV Files</h2>
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1 onclick="window.location.href='/'">Get Verified</h1>
+        <div>
+            <a href="/">Home</a>
+            <a href="/gallery">Gallery</a>
+            <a href="/csvs">CSV Files</a>
+            <a href="/select-image">Templates</a>
+        </div>
+    </div>
 
-    {% if csv_files %}
-        {% for csv in csv_files %}
-            <div class="csv-item">
-                📄 <a href="/uploads/{{ csv }}" target="_blank">{{ csv }}</a>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No CSV files uploaded yet.</p>
-    {% endif %}
+    <!-- Page Header -->
+    <div class="page-header">
+        <h2>Uploaded CSV Files</h2>
+        <p>View and manage all the CSV files used for certificate generation</p>
+    </div>
 
-    <br>
-    <a href="/">⬅ Back to Upload Page</a>
+    <!-- CSV List -->
+    <div class="csv-list">
+        {% if csv_files %}
+            {% for csv in csv_files %}
+                <div class="csv-item">
+                    📄 <a href="/uploads/{{ csv }}" target="_blank">{{ csv }}</a>
+                    <span>{{ loop.index }}</span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-csv">No CSV files uploaded yet. Upload a new CSV from the <a href="/">home page</a>.</p>
+        {% endif %}
+    </div>
+
+    <div style="text-align: center;">
+        <a class="back-btn" href="/">⬅ Back to Upload Page</a>
+    </div>
+
+    <div class="footer">
+        &copy; 2025 Get Verified. All rights reserved.
+    </div>
 
 </body>
 </html>
